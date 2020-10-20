@@ -15,20 +15,18 @@ export interface ComposeType<R, T> {
 
 const Compose = <R, T>(
   plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> => {
-  return {
-    add(newPlugins) {
-      return Compose([...plugins, ...newPlugins]);
-    },
-    exec(options) {
-      const func = plugins.reduce(
-        (acc, x) => () => x(acc, options),
-        () => plugins[0](null, options)
-      );
+): ComposeInstance<R, T> => ({
+  add(newPlugins) {
+    return Compose([...plugins, ...newPlugins]);
+  },
+  exec(options) {
+    const func = plugins.reduce(
+      (acc, x) => () => x(acc, options),
+      () => plugins[0](null, options)
+    );
 
-      return func();
-    }
-  };
-};
+    return func();
+  }
+});
 
 export default Compose;
