@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=development vite & npm run lint",
+    "serve": "NODE_ENV=development vite & npm run lint",
     "lint": "esw --color -w src/** --ext .vue,.ts,.js --no-error-on-unmatched-pattern",
     "build": "vite build"
   },

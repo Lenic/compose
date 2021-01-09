@@ -9,7 +9,7 @@
 <script lang="ts">
 import { defineComponent, reactive } from "vue";
 
-import Compose from "../http/core";
+import { compose } from "../http/core";
 
 export default defineComponent({
   name: "About",
@@ -17,13 +17,25 @@ export default defineComponent({
     const state = reactive({ code: 0 });
 
     const handler = () => {
-      const config = Compose<number, number>([
-        (next, options) => options,
-        (next, options) => next() + 1 + options,
-        (next, options) => next() + 2 + options,
-        (next, options) => next() + 3 + options,
-        (next, options) => next() + 4 + options
-      ]);
+      const config = compose<number, number>(
+        (options) => options,
+        (next, options) => {
+          const res = next(3);
+          return res + 1 + options;
+        },
+        (next, options) => {
+          const res = next(4);
+          return res + 2 + options;
+        },
+        (next, options) => {
+          const res = next(5);
+          return res + 3 + options;
+        },
+        (next, options) => {
+          const res = next(6);
+          return res + 4 + options;
+        }
+      );
 
       state.code = config.exec(state.code);
     };
