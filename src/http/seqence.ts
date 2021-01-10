@@ -36,10 +36,7 @@ const seqence = <R, T>(): ComposePlugin<R, T> => {
 
     const { next, defer } = item;
     promiseWrapper(next())
-      .then(
-        (v) => defer.resolve(v),
-        (e) => defer.reject(e)
-      )
+      .then(defer.resolve, defer.reject)
       .then(endProcessingFunc, endProcessingFunc);
   };
 
