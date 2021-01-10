@@ -8,6 +8,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@lenic/deferred": "^2.0.0",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0-beta.13",
     "vuex": "^4.0.0-beta.4"
