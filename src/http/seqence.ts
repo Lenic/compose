@@ -17,20 +17,20 @@ const promiseWrapper = <R>(arg: ComposeResult<R>) => {
   });
 };
 
-const seqence = <R, T>(): ComposePlugin<R, T> => {
+const seqence = <R, T>(concurrent = 1): ComposePlugin<R, T> => {
   const queue: QueueItem<R, T>[] = [];
-
-  let processing = false;
+  const processState = new Array(concurrent).fill(false);
 
   const exec = () => {
-    if (processing) return;
+    const vacantIndex = processState.findIndex((v) => !v);
+    if (vacantIndex < 0) return;
 
     const item = queue.shift();
     if (!item) return;
 
-    processing = true;
+    processState[vacantIndex] = true;
     const endProcessingFunc = () => {
-      processing = false;
+      processState[vacantIndex] = false;
       exec();
     };
 

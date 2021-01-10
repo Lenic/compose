@@ -42,7 +42,7 @@ export default defineComponent({
       state.code = config.exec(state.code);
     };
 
-    const seq = seqence<string, string>();
+    const seq = seqence<string, string>(2);
     const handler2 = () => {
       debugger;
       const config = compose<string, string>(
@@ -60,13 +60,13 @@ export default defineComponent({
         }
       );
 
-      // config.exec("1").then(console.log);
-      // config.exec("2").then(console.log);
-      // config.exec("3").then(console.log);
-      // config.exec("4").then(console.log);
-      // config.exec("5").then(console.log);
+      config.exec("1").then(console.log);
+      config.exec("2").then(console.log);
+      config.exec("3").then(console.log);
+      config.exec("4").then(console.log);
+      config.exec("5").then(console.log);
 
-      config.exec(Date.now().toString()).then(console.log);
+      // config.exec(Date.now().toString()).then(console.log);
     };
 
     return {
