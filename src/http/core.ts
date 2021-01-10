@@ -36,12 +36,12 @@ export const ComposeFunc = <R, T>(
         ? plugins.reduceRight
         : plugins.reduce;
 
-    let opts: T;
+    let opts = options;
     const getOpts = (config?: T) => {
       if (config) {
         opts = config;
       }
-      return opts || options;
+      return opts;
     };
     const func = method.call(
       plugins,
