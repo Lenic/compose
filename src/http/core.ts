@@ -23,35 +23,41 @@ export const ComposeFunc = <R, T>(
   direction: ComposeDirection,
   defaultAction: (options: T) => ComposeResult<R>,
   plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> => ({
-  add(...newPlugins) {
-    if (!newPlugins.length) return this;
+): ComposeInstance<R, T> => {
+  type NextFuncType = (config?: T) => ComposeResult<R>;
 
-    return ComposeFunc(direction, defaultAction, [...plugins, ...newPlugins]);
-  },
-  exec(options) {
-    type NextFuncType = (config?: T) => ComposeResult<R>;
-    const method =
-      direction === ComposeDirection.LEFT_TO_RIGHT
-        ? plugins.reduceRight
-        : plugins.reduce;
+  let func: NextFuncType;
+  return {
+    add(...newPlugins) {
+      if (!newPlugins.length) return this;
 
-    let opts = options;
-    const getOpts = (config?: T) => {
-      if (config) {
-        opts = config;
+      return ComposeFunc(direction, defaultAction, [...plugins, ...newPlugins]);
+    },
+    exec(options) {
+      const method =
+        direction === ComposeDirection.LEFT_TO_RIGHT
+          ? plugins.reduceRight
+          : plugins.reduce;
+
+      let opts = options;
+      const getOpts = (config?: T) => {
+        if (config) {
+          opts = config;
+        }
+        return opts;
+      };
+      if (!func) {
+        func = method.call(
+          plugins,
+          (acc, x) => (config?: T) => x(acc as NextFuncType, getOpts(config)),
+          (config?: T) => defaultAction(getOpts(config))
+        ) as NextFuncType;
       }
-      return opts;
-    };
-    const func = method.call(
-      plugins,
-      (acc, x) => (config?: T) => x(acc as NextFuncType, getOpts(config)),
-      (config?: T) => defaultAction(getOpts(config))
-    ) as NextFuncType;
 
-    return func(options);
-  }
-});
+      return func(options);
+    }
+  };
+};
 
 export const compose = <R, T>(
   defaultAction: (options: T) => ComposeResult<R>,
