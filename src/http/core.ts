@@ -36,7 +36,7 @@ export const ComposeFunc = <R, T>(
   defaultAction: (options: T) => R,
   plugins: ComposePlugin<R, T>[]
 ): ComposeInstance<R, T> => {
-  let orderedPlugins: ComposePluginFullConfig[];
+  let orderedPlugins: ComposePluginCore<R, T>[];
   return {
     add(...newPlugins) {
       if (!newPlugins.length) return this;
@@ -70,8 +70,8 @@ export const ComposeFunc = <R, T>(
 
       const method =
         direction === ComposeDirection.LEFT_TO_RIGHT
-          ? plugins.reduceRight
-          : plugins.reduce;
+          ? orderedPlugins.reduceRight
+          : orderedPlugins.reduce;
 
       const func = method.call(
         orderedPlugins,
