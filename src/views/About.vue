@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from "vue";
+import { defineComponent, reactive, ref } from "vue";
 
 import { compose } from "../http/core";
 import seqence from "../http/seqence";
@@ -27,7 +27,7 @@ const delay = (wait: number) => <T>(source: Promise<T>): Promise<T> => {
 export default defineComponent({
   name: "About",
   setup() {
-    const list = reactive<string[]>([]);
+    const list = ref<string[]>([]);
     const state = reactive({ code: 0 });
 
     const handler = () => {
@@ -56,7 +56,7 @@ export default defineComponent({
 
     const seq = seqence<string, string>(2);
     const handler2 = () => {
-      debugger;
+      list.value = [];
       const config = compose<Promise<string>, string>(
         (v) => {
           return Promise.resolve(`end(${v})`);
@@ -65,13 +65,13 @@ export default defineComponent({
         (next) => delay(Math.floor(Math.random() * 1000))(next())
       );
 
-      config.exec("1").then((v) => list.push(v));
-      config.exec("2").then((v) => list.push(v));
-      config.exec("3").then((v) => list.push(v));
-      config.exec("4").then((v) => list.push(v));
-      config.exec("5").then((v) => list.push(v));
+      config.exec("1").then((v) => list.value.push(v));
+      config.exec("2").then((v) => list.value.push(v));
+      config.exec("3").then((v) => list.value.push(v));
+      config.exec("4").then((v) => list.value.push(v));
+      config.exec("5").then((v) => list.value.push(v));
 
-      // config.exec(Date.now().toString()).then(v=>list.push(v);
+      // config.exec(Date.now().toString()).then(v=>list.value.push(v);
     };
 
     return {
