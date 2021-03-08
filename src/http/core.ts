@@ -5,8 +5,12 @@ export enum ComposeDirection {
   RIGHT_TO_LEFT = 1
 }
 
+export interface NextFunction<R, T> {
+  (config?: T): ComposeResult<R>;
+}
+
 export interface ComposePlugin<R, T> {
-  (next: (config?: T) => ComposeResult<R>, arg: T): ComposeResult<R>;
+  (next: NextFunction<R, T>, arg: T): ComposeResult<R>;
 }
 
 export interface ComposeInstance<R, T> {
@@ -24,9 +28,7 @@ export const ComposeFunc = <R, T>(
   defaultAction: (options: T) => ComposeResult<R>,
   plugins: ComposePlugin<R, T>[]
 ): ComposeInstance<R, T> => {
-  type NextFuncType = (config?: T) => ComposeResult<R>;
-
-  let func: NextFuncType;
+  let func: NextFunction<R, T>;
   return {
     add(...newPlugins) {
       if (!newPlugins.length) return this;
@@ -34,11 +36,6 @@ export const ComposeFunc = <R, T>(
       return ComposeFunc(direction, defaultAction, [...plugins, ...newPlugins]);
     },
     exec(options) {
-      const method =
-        direction === ComposeDirection.LEFT_TO_RIGHT
-          ? plugins.reduceRight
-          : plugins.reduce;
-
       let opts = options;
       const getOpts = (config?: T) => {
         if (config) {
@@ -46,12 +43,19 @@ export const ComposeFunc = <R, T>(
         }
         return opts;
       };
+
       if (!func) {
+        const method =
+          direction === ComposeDirection.LEFT_TO_RIGHT
+            ? plugins.reduceRight
+            : plugins.reduce;
+
         func = method.call(
           plugins,
-          (acc, x) => (config?: T) => x(acc as NextFuncType, getOpts(config)),
+          (acc, x) => (config?: T) =>
+            x(acc as NextFunction<R, T>, getOpts(config)),
           (config?: T) => defaultAction(getOpts(config))
-        ) as NextFuncType;
+        ) as NextFunction<R, T>;
       }
 
       return func(options);
