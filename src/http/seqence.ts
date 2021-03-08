@@ -1,46 +1,36 @@
 import Deferred from "@lenic/deferred";
 
-import type { ComposePlugin, ComposeResult } from "./core";
+import type { ComposePlugin, NextFunction } from "./core";
 
 interface QueueItem<R, T> {
-  next: (config?: T) => ComposeResult<R>;
   defer: Deferred<R>;
+  next: NextFunction<Promise<R>, T>;
 }
 
-const promiseWrapper = <R>(arg: ComposeResult<R>) => {
-  return new Promise<R>((resolve, reject) => {
-    try {
-      resolve(arg);
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
-
-const seqence = <R, T>(concurrent = 1): ComposePlugin<R, T> => {
+const seqence = <R, T>(concurrent = 1): ComposePlugin<Promise<R>, T> => {
   const queue: QueueItem<R, T>[] = [];
   const processState = new Array(concurrent).fill(false);
 
   const exec = () => {
-    const vacantIndex = processState.findIndex((v) => !v);
-    if (vacantIndex < 0) return;
+    const index = processState.findIndex((v) => !v);
+    if (index < 0) return;
 
     const item = queue.shift();
     if (!item) return;
 
-    processState[vacantIndex] = true;
+    processState[index] = true;
     const endProcessingFunc = () => {
-      processState[vacantIndex] = false;
+      processState[index] = false;
       exec();
     };
 
     const { next, defer } = item;
-    promiseWrapper(next())
+    next()
       .then(defer.resolve, defer.reject)
       .then(endProcessingFunc, endProcessingFunc);
   };
 
-  const plugin: ComposePlugin<R, T> = (next) => {
+  const plugin: ComposePlugin<Promise<R>, T> = (next) => {
     const defer = new Deferred<R>();
 
     queue.push({ next, defer });
