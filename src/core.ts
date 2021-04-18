@@ -1,15 +1,4 @@
-export enum ComposeDirection {
-  LEFT_TO_RIGHT = 0,
-  RIGHT_TO_LEFT = 1
-}
-
-export interface NextFunction<R, T> {
-  (config?: T): R;
-}
-
-export interface ComposePluginCore<R, T> {
-  (next: NextFunction<R, T>, arg: T): R;
-}
+import { ComposeDirection, ComposeInstance, ComposePlugin, ComposePluginFullConfig, NextFunction } from './types';
 
 interface Ref<T> {
   value: T;
@@ -19,22 +8,7 @@ interface NextFunctionWrapper<R, T> {
   (value: Ref<T>): R;
 }
 
-export interface ComposePluginFullConfig<R, T> {
-  desc: string;
-  order: number;
-  executor: ComposePluginCore<R, T>;
-}
-
-export type ComposePlugin<R, T> = ComposePluginCore<R, T> | ComposePluginFullConfig<R, T>;
-
-export interface ComposeInstance<R, T> {
-  add(
-    pluginsOrCallback: ComposePlugin<R, T>[] | ((list: ComposePlugin<R, T>[]) => ComposePlugin<R, T>[])
-  ): ComposeInstance<R, T>;
-  exec(value: T): R;
-}
-
-export const ComposeFunc = <R, T>(
+export const composeFunc = <R, T>(
   direction: ComposeDirection,
   defaultAction: (options: T) => R,
   plugins: ComposePlugin<R, T>[]
@@ -55,7 +29,7 @@ export const ComposeFunc = <R, T>(
         resultList = [...plugins, ...pluginsOrCallback];
       }
 
-      return ComposeFunc(direction, defaultAction, resultList);
+      return composeFunc(direction, defaultAction, resultList);
     },
     exec(value) {
       if (!func) {
@@ -101,9 +75,9 @@ export const ComposeFunc = <R, T>(
 export const compose = <R, T>(
   defaultAction: (options: T) => R,
   plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> => ComposeFunc(ComposeDirection.LEFT_TO_RIGHT, defaultAction, plugins);
+): ComposeInstance<R, T> => composeFunc(ComposeDirection.LEFT_TO_RIGHT, defaultAction, plugins);
 
 export const composeRight = <R, T>(
   defaultAction: (options: T) => R,
   plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> => ComposeFunc(ComposeDirection.RIGHT_TO_LEFT, defaultAction, plugins);
+): ComposeInstance<R, T> => composeFunc(ComposeDirection.RIGHT_TO_LEFT, defaultAction, plugins);

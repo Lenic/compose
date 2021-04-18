@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+      pre {
+        font-family: Consolas;
+      }
+
+      li {
+        line-height: 2;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <div>
+        <input id="btnWhite" type="button" value="clear" />
+        <input id="btnSync" type="button" value="同步测试" />
+        <input id="btnAsync" type="button" value="异步测试" />
+      </div>
+      <div>
+        <ol id="olList"></ol>
+      </div>
+    </div>
+  </body>
+</html>
