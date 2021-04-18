@@ -1,6 +1,6 @@
-import Deferred from "@lenic/deferred";
+import Deferred from '@lenic/deferred';
 
-import type { ComposePlugin, NextFunction } from "./core";
+import type { ComposePlugin, NextFunction } from './core';
 
 interface QueueItem<R, T> {
   defer: Deferred<R>;
@@ -25,9 +25,9 @@ const seqence = <R, T>(concurrent = 1): ComposePlugin<Promise<R>, T> => {
     };
 
     const { next, defer } = item;
-    next()
-      .then(defer.resolve, defer.reject)
-      .then(endProcessingFunc, endProcessingFunc);
+    const res = next();
+    res.then(endProcessingFunc, endProcessingFunc);
+    res.then(defer.resolve, defer.reject);
   };
 
   const plugin: ComposePlugin<Promise<R>, T> = (next) => {
