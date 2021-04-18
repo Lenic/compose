@@ -1,24 +1,4 @@
-# @lenic/compose
-
-组合模式的一个实现方案，可以把操作封装成一个管道。
-
-## Usage
-
-```html
-<div>
-  <div>
-    <input id="btnWhite" type="button" value="clear" />
-    <input id="btnSync" type="button" value="同步测试" />
-    <input id="btnAsync" type="button" value="异步测试" />
-  </div>
-  <div>
-    <ol id="olList"></ol>
-  </div>
-</div>
-```
-
-```js
-import { compose } from '@lenic/compose';
+import { compose } from '../../';
 
 import seqence from './seqence';
 
@@ -91,4 +71,3 @@ document.getElementById('btnAsync').addEventListener('click', () => {
   config.exec('4').then((v) => print('async completed', v));
   config.exec('5').then((v) => print('async completed', v));
 });
-```
