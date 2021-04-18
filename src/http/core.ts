@@ -11,53 +11,59 @@ export interface ComposePluginCore<R, T> {
   (next: NextFunction<R, T>, arg: T): R;
 }
 
+interface Ref<T> {
+  value: T;
+}
+
+interface NextFunctionWrapper<R, T> {
+  (value: Ref<T>): R;
+}
+
 export interface ComposePluginFullConfig<R, T> {
   desc: string;
   order: number;
   executor: ComposePluginCore<R, T>;
 }
 
-export type ComposePlugin<R, T> =
-  | ComposePluginCore<R, T>
-  | ComposePluginFullConfig<R, T>;
+export type ComposePlugin<R, T> = ComposePluginCore<R, T> | ComposePluginFullConfig<R, T>;
 
 export interface ComposeInstance<R, T> {
-  add(...newPlugins: ComposePlugin<R, T>[]): ComposeInstance<R, T>;
-  exec(options: T): R;
+  add(
+    pluginsOrCallback: ComposePlugin<R, T>[] | ((list: ComposePlugin<R, T>[]) => ComposePlugin<R, T>[])
+  ): ComposeInstance<R, T>;
+  exec(value: T): R;
 }
-
-export type ComposeType = <R, T>(
-  defaultAction: (options: T) => R,
-  ...plugins: ComposePlugin<R, T>[]
-) => ComposeInstance<R, T>;
 
 export const ComposeFunc = <R, T>(
   direction: ComposeDirection,
   defaultAction: (options: T) => R,
   plugins: ComposePlugin<R, T>[]
 ): ComposeInstance<R, T> => {
-  let orderedPlugins: ComposePluginCore<R, T>[];
+  let func: NextFunctionWrapper<R, T>;
+
   return {
-    add(...newPlugins) {
-      if (!newPlugins.length) return this;
+    add(pluginsOrCallback) {
+      let resultList: ComposePlugin<R, T>[];
 
-      return ComposeFunc(direction, defaultAction, [...plugins, ...newPlugins]);
+      if (typeof pluginsOrCallback === 'function') {
+        resultList = pluginsOrCallback(plugins);
+
+        if (resultList === plugins) return this;
+      } else {
+        if (!pluginsOrCallback.length) return this;
+
+        resultList = [...plugins, ...pluginsOrCallback];
+      }
+
+      return ComposeFunc(direction, defaultAction, resultList);
     },
-    exec(options) {
-      let opts = options;
-      const getOpts = (config?: T) => {
-        if (config) {
-          opts = config;
-        }
-        return opts;
-      };
-
-      if (!orderedPlugins) {
-        orderedPlugins = plugins
+    exec(value) {
+      if (!func) {
+        const orderedPlugins = plugins
           .map((v) => {
-            if (typeof v === "function") {
+            if (typeof v === 'function') {
               return {
-                desc: "",
+                desc: '',
                 order: 0,
                 executor: v
               } as ComposePluginFullConfig<R, T>;
@@ -66,33 +72,38 @@ export const ComposeFunc = <R, T>(
           })
           .sort((x, y) => x.order - y.order)
           .map((v) => v.executor);
+
+        const method =
+          direction === ComposeDirection.LEFT_TO_RIGHT ? orderedPlugins.reduceRight : orderedPlugins.reduce;
+
+        func = method.call(
+          orderedPlugins,
+          (acc, x) => (options: Ref<T>) => {
+            const action: NextFunction<R, T> = (config?: T) => {
+              if (typeof config !== 'undefined') {
+                options.value = config;
+              }
+
+              return (acc as NextFunctionWrapper<R, T>)(options);
+            };
+
+            return x(action, options.value);
+          },
+          (options: Ref<T>) => defaultAction(options.value)
+        ) as NextFunctionWrapper<R, T>;
       }
 
-      const method =
-        direction === ComposeDirection.LEFT_TO_RIGHT
-          ? orderedPlugins.reduceRight
-          : orderedPlugins.reduce;
-
-      const func = method.call(
-        orderedPlugins,
-        (acc, x) => (config?: T) =>
-          x(acc as NextFunction<R, T>, getOpts(config)),
-        (config?: T) => defaultAction(getOpts(config))
-      ) as NextFunction<R, T>;
-
-      return func(options);
+      return func({ value });
     }
   };
 };
 
 export const compose = <R, T>(
   defaultAction: (options: T) => R,
-  ...plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> =>
-  ComposeFunc(ComposeDirection.LEFT_TO_RIGHT, defaultAction, plugins);
+  plugins: ComposePlugin<R, T>[]
+): ComposeInstance<R, T> => ComposeFunc(ComposeDirection.LEFT_TO_RIGHT, defaultAction, plugins);
 
 export const composeRight = <R, T>(
   defaultAction: (options: T) => R,
-  ...plugins: ComposePlugin<R, T>[]
-): ComposeInstance<R, T> =>
-  ComposeFunc(ComposeDirection.RIGHT_TO_LEFT, defaultAction, plugins);
+  plugins: ComposePlugin<R, T>[]
+): ComposeInstance<R, T> => ComposeFunc(ComposeDirection.RIGHT_TO_LEFT, defaultAction, plugins);

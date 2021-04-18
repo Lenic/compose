@@ -11,28 +11,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref } from "vue";
+import { defineComponent, reactive, ref } from 'vue';
 
-import { compose } from "../http/core";
-import seqence from "../http/seqence";
-
-const delay = (wait: number) => <T>(source: Promise<T>): Promise<T> => {
-  return new Promise<T>((resolve) => {
-    setTimeout(() => {
-      resolve(source);
-    }, wait);
-  });
-};
+import { compose } from '../http/core';
+import seqence from '../http/seqence';
 
 export default defineComponent({
-  name: "About",
+  name: 'About',
   setup() {
     const list = ref<string[]>([]);
     const state = reactive({ code: 0 });
 
     const handler = () => {
-      const config = compose<number, number>(
-        (options) => options,
+      const config = compose<number, number>((options) => options, [
         (next, options) => {
           const res = next(3);
           return res + 1 + options;
@@ -49,7 +40,7 @@ export default defineComponent({
           const res = next();
           return res + 4 + options;
         }
-      );
+      ]);
 
       state.code = config.exec(state.code);
     };
@@ -57,21 +48,22 @@ export default defineComponent({
     const seq = seqence<string, string>(2);
     const handler2 = () => {
       list.value = [];
-      const config = compose<Promise<string>, string>(
-        (v) => {
-          return Promise.resolve(`end(${v})`);
-        },
+      const config = compose<Promise<string>, string>((v) => Promise.resolve(`end(${v})`), [
         seq,
-        (next) => delay(Math.floor(Math.random() * 1000))(next())
-      );
+        (next) => {
+          return new Promise<string>((r) => {
+            setTimeout(() => {
+              r(next());
+            }, Math.floor(Math.random() * 1000));
+          });
+        }
+      ]);
 
-      config.exec("1").then((v) => list.value.push(v));
-      config.exec("2").then((v) => list.value.push(v));
-      config.exec("3").then((v) => list.value.push(v));
-      config.exec("4").then((v) => list.value.push(v));
-      config.exec("5").then((v) => list.value.push(v));
-
-      // config.exec(Date.now().toString()).then(v=>list.value.push(v);
+      config.exec('1').then((v) => list.value.push(v));
+      config.exec('2').then((v) => list.value.push(v));
+      config.exec('3').then((v) => list.value.push(v));
+      config.exec('4').then((v) => list.value.push(v));
+      config.exec('5').then((v) => list.value.push(v));
     };
 
     return {
