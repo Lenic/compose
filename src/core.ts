@@ -1,4 +1,6 @@
-import { ComposeDirection, ComposeInstance, ComposePlugin, ComposePluginFullConfig, NextFunction } from './types';
+import type { ComposeInstance, ComposePlugin, ComposePluginCore, ComposePluginFullConfig, NextFunction } from './types';
+
+import { ComposeDirection } from './types';
 
 interface Ref<T> {
   value: T;
@@ -52,19 +54,21 @@ export const composeFunc = <R, T>(
 
         func = method.call(
           orderedPlugins,
-          (acc, x) => (options: Ref<T>) => {
-            const action: NextFunction<R, T> = (config?: T) => {
-              if (typeof config !== 'undefined') {
-                options.value = config;
-              }
+          (acc: NextFunctionWrapper<R, T>, x: ComposePluginCore<R, T>) => {
+            return (options: Ref<T>) => {
+              const action: NextFunction<R, T> = (config?: T) => {
+                if (typeof config !== 'undefined') {
+                  options.value = config;
+                }
 
-              return (acc as NextFunctionWrapper<R, T>)(options);
+                return acc(options);
+              };
+
+              return x(action, options.value);
             };
-
-            return x(action, options.value);
           },
           (options: Ref<T>) => defaultAction(options.value)
-        ) as NextFunctionWrapper<R, T>;
+        );
       }
 
       return func({ value });
