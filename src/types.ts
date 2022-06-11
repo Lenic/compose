@@ -3,16 +3,12 @@ export enum ComposeDirection {
   RIGHT_TO_LEFT = 1
 }
 
-export interface NextFunction<R, T> {
-  (config?: T): R;
-}
-
 export interface ComposePluginCore<R, T> {
-  (next: NextFunction<R, T>, arg: T): R;
+  (next: (config?: T) => R, arg: T): R;
 }
 
 export interface ComposePluginFullConfig<R, T> {
-  desc: string;
+  desc?: string;
   order: number;
   executor: ComposePluginCore<R, T>;
 }
@@ -20,6 +16,7 @@ export interface ComposePluginFullConfig<R, T> {
 export type ComposePlugin<R, T> = ComposePluginCore<R, T> | ComposePluginFullConfig<R, T>;
 
 export interface ComposeInstance<R, T> {
+  (value: T): R;
   add(
     pluginsOrCallback: ComposePlugin<R, T>[] | ((list: ComposePlugin<R, T>[]) => ComposePlugin<R, T>[])
   ): ComposeInstance<R, T>;
